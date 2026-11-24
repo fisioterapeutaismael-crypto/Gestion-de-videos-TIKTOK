@@ -149,7 +149,7 @@ label>*{display:block;width:100%;margin-top:3px;color:var(--ink)}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAX8QQnPt8PSGmPNEHelVOTvhgPrv-VETg",
@@ -208,7 +208,25 @@ async function pushCloud(){
   if(applyingRemote)return;
   setSyncUI('','Guardando...');
   try{
-    await setDoc(cloudDoc,JSON.parse(JSON.stringify(S)));
+    const snap=await getDoc(cloudDoc);
+    const remote=snap.exists()?snap.data():null;
+    const byId=(a=[],b=[])=>{
+      const m=new Map();
+      (Array.isArray(a)?a:[]).forEach(x=>{if(x&&x.id!=null)m.set(x.id,x);});
+      (Array.isArray(b)?b:[]).forEach(x=>{if(x&&x.id!=null)m.set(x.id,{...(m.get(x.id)||{}),...x});});
+      return [...m.values()];
+    };
+    const merged={
+      ...(remote||{}),
+      ...JSON.parse(JSON.stringify(S)),
+      accounts:byId(remote?.accounts,S.accounts),
+      products:byId(remote?.products,S.products),
+      posts:byId(remote?.posts,S.posts)
+    };
+    S=Object.assign({accounts:[],products:[],posts:[],thr:3},merged);
+    norm();
+    saveLocal();
+    await setDoc(cloudDoc,JSON.parse(JSON.stringify(S)),{merge:true});
     cloudErr='';
     setSyncUI('ok','Sincronizado');
   }catch(e){
@@ -477,8 +495,18 @@ onSnapshot(cloudDoc, snap => {
   if(snap.exists()){
     const remote=snap.data();
     if(remote && Array.isArray(remote.products) && Array.isArray(remote.accounts) && Array.isArray(remote.posts)){
-      applyingRemote=true;
-      S=Object.assign({accounts:[],products:[],posts:[],thr:3},remote);
+applyingRemote=true;
+      const mergeArr=(localArr=[],remArr=[])=>{
+        const map=new Map();
+        (Array.isArray(localArr)?localArr:[]).forEach(item=>{if(item&&item.id!=null)map.set(item.id,item);});
+        (Array.isArray(remArr)?remArr:[]).forEach(item=>{if(item&&item.id!=null)map.set(item.id,{...(map.get(item.id)||{}),...item});});
+        return [...map.values()];
+      };
+      S=Object.assign({accounts:[],products:[],posts:[],thr:3},S,remote,{
+        accounts:mergeArr(S.accounts,remote.accounts),
+        products:mergeArr(S.products,remote.products),
+        posts:mergeArr(S.posts,remote.posts)
+      });
       norm();
       saveLocal();
       const ae=document.activeElement,busy=$('#dlg').open||$('#cdlg').open||(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName));
