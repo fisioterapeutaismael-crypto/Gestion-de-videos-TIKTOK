@@ -210,15 +210,21 @@ async function pushCloud(){
   try{
     const snap=await getDoc(cloudDoc);
     const remote=snap.exists()?snap.data():null;
+    const deletedIds=Array.from(new Set([
+      ...(Array.isArray(remote?.deletedIds)?remote.deletedIds:[]),
+      ...(Array.isArray(S.deletedIds)?S.deletedIds:[])
+    ]));
+    const deletedSet=new Set(deletedIds);
     const byId=(a=[],b=[])=>{
       const m=new Map();
-      (Array.isArray(a)?a:[]).forEach(x=>{if(x&&x.id!=null)m.set(x.id,x);});
-      (Array.isArray(b)?b:[]).forEach(x=>{if(x&&x.id!=null)m.set(x.id,{...(m.get(x.id)||{}),...x});});
+      (Array.isArray(a)?a:[]).forEach(x=>{if(x&&x.id!=null&&!deletedSet.has(x.id))m.set(x.id,x);});
+      (Array.isArray(b)?b:[]).forEach(x=>{if(x&&x.id!=null&&!deletedSet.has(x.id))m.set(x.id,{...(m.get(x.id)||{}),...x});});
       return [...m.values()];
     };
     const merged={
       ...(remote||{}),
       ...JSON.parse(JSON.stringify(S)),
+      deletedIds,
       accounts:byId(remote?.accounts,S.accounts),
       products:byId(remote?.products,S.products),
       posts:byId(remote?.posts,S.posts)
@@ -427,9 +433,9 @@ const A={
   new:t=>openPost(null,t.dataset.date,t.dataset.acc,t.dataset.prod,t.dataset.time),
   edit:t=>openPost(S.posts.find(x=>x.id==t.dataset.id)),
   close:()=>$('#dlg').close(),
-  delpost:()=>{const e=editing;if(e)ask('¿Eliminar esta publicación? Se te devuelve un video.',()=>{const pr=prod(e.productId);if(pr)pr.stock++;S.posts=S.posts.filter(x=>x!==e);$('#dlg').close();render();save()})},
-  delprod:t=>ask('¿Eliminar el producto y sus publicaciones?',()=>{S.products=S.products.filter(p=>p.id!=t.dataset.id);S.posts=S.posts.filter(x=>x.productId!=t.dataset.id);render();save()}),
-  delacc:t=>ask('¿Eliminar la cuenta y sus publicaciones?',()=>{S.posts.filter(x=>x.accountId==t.dataset.id&&x.status=='planned').forEach(x=>{const pr=prod(x.productId);if(pr)pr.stock++});S.accounts=S.accounts.filter(a=>a.id!=t.dataset.id);S.posts=S.posts.filter(x=>x.accountId!=t.dataset.id);render();save()}),
+ delpost:()=>{const e=editing;if(e)ask('¿Eliminar esta publicación? Se te devuelve un video.',()=>{const pr=prod(e.productId);if(pr)pr.stock++;S.deletedIds=Array.from(new Set([...(S.deletedIds||[]),e.id]));S.posts=S.posts.filter(x=>x.id!==e.id);save();});},
+delprod:t=>ask('¿Eliminar el producto y sus publicaciones?',()=>{const pid=t.dataset.id;const delP=S.posts.filter(x=>x.productId===pid).map(x=>x.id);S.deletedIds=Array.from(new Set([...(S.deletedIds||[]),pid,...delP]));S.products=S.products.filter(p=>p.id!==pid);S.posts=S.posts.filter(x=>x.productId!==pid);save();}),
+delacc:t=>ask('¿Eliminar la cuenta y sus publicaciones?',()=>{const aid=t.dataset.id;S.posts.filter(x=>x.accountId===aid&&x.status==='planned').forEach(x=>{const pr=prod(x.productId);if(pr)pr.stock++;});const delP=S.posts.filter(x=>x.accountId===aid).map(x=>x.id);S.deletedIds=Array.from(new Set([...(S.deletedIds||[]),aid,...delP]));S.accounts=S.accounts.filter(a=>a.id!==aid);S.posts=S.posts.filter(x=>x.accountId!==aid);save();}),
   export:()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));a.download='publicaciones-'+ymd(new Date())+'.json';a.click()},
   import:()=>$('#file').click()
 };
@@ -496,13 +502,19 @@ onSnapshot(cloudDoc, snap => {
     const remote=snap.data();
     if(remote && Array.isArray(remote.products) && Array.isArray(remote.accounts) && Array.isArray(remote.posts)){
 applyingRemote=true;
+    const deletedIds=Array.from(new Set([
+        ...(Array.isArray(S.deletedIds)?S.deletedIds:[]),
+        ...(Array.isArray(remote.deletedIds)?remote.deletedIds:[])
+      ]));
+      const deletedSet=new Set(deletedIds);
       const mergeArr=(localArr=[],remArr=[])=>{
         const map=new Map();
-        (Array.isArray(localArr)?localArr:[]).forEach(item=>{if(item&&item.id!=null)map.set(item.id,item);});
-        (Array.isArray(remArr)?remArr:[]).forEach(item=>{if(item&&item.id!=null)map.set(item.id,{...(map.get(item.id)||{}),...item});});
+        (Array.isArray(localArr)?localArr:[]).forEach(item=>{if(item&&item.id!=null&&!deletedSet.has(item.id))map.set(item.id,item);});
+        (Array.isArray(remArr)?remArr:[]).forEach(item=>{if(item&&item.id!=null&&!deletedSet.has(item.id))map.set(item.id,{...(map.get(item.id)||{}),...item});});
         return [...map.values()];
       };
-      S=Object.assign({accounts:[],products:[],posts:[],thr:3},S,remote,{
+      S=Object.assign({accounts:[],products:[],posts:[],deletedIds:[],thr:3},S,remote,{
+        deletedIds,
         accounts:mergeArr(S.accounts,remote.accounts),
         products:mergeArr(S.products,remote.products),
         posts:mergeArr(S.posts,remote.posts)
