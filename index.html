@@ -72,11 +72,11 @@ label>*{display:block;width:100%;margin-top:3px;color:var(--ink)}
 .tgh{position:sticky;top:0;z-index:3;display:grid;grid-template-columns:52px repeat(var(--n),minmax(calc(var(--na)*64px),1fr));background:var(--card);border-bottom:1px solid var(--line)}
 .tgd{padding:6px;text-align:center;border-left:1px solid var(--line);font-size:13px}
 .tgd.today b{background:var(--acc);color:#fff;border-radius:12px;padding:1px 7px}
-.tgc{display:grid;grid-template-columns:52px repeat(var(--n),minmax(calc(var(--na)*88px),1fr))}
+.tgc{display:grid;grid-template-columns:52px repeat(var(--n),minmax(calc(var(--na)*64px),1fr))}
 .hr,.slot{height:48px}
 .hr{font-size:11px;color:var(--mut);text-align:right;padding:0 6px}
 .hr:not(:first-child){transform:translateY(-8px)}
-.dcol{position:relative;display:flex;border-left:1px solid var(--line)}
+.dcol{position:relative;display:flex;min-width:0;border-left:1px solid var(--line)}
 .lane{flex:1;min-width:0;position:relative;border-left:1px dashed var(--line)}
 .lane:first-child{border-left:0}
 .lh{display:flex;margin-top:4px}
