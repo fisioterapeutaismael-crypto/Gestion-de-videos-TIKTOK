@@ -86,7 +86,7 @@ label>*{display:block;width:100%;margin-top:3px;color:var(--ink)}
 .fr{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0 10px}
 .slot{border-bottom:1px solid var(--line);cursor:pointer}
 .slot:hover{background:var(--paper)}
-.ev{position:absolute;height:44px;padding:2px 6px;border-left:4px solid var(--c);background:var(--paper);outline:1px solid var(--line);border-radius:4px;font-size:12px;line-height:1.25;overflow:hidden;cursor:pointer;z-index:2}
+.ev{position:absolute;height:22px;padding:0 6px;border-left:4px solid var(--c);background:var(--paper);outline:1px solid var(--line);border-radius:4px;font-size:12px;line-height:22px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;cursor:pointer;z-index:2}
 .ev small{color:var(--mut)}
 .ev.done{opacity:.6}
 .now{position:absolute;left:0;right:0;height:2px;background:var(--warn);z-index:2;pointer-events:none}
@@ -315,12 +315,11 @@ function timeGrid(days,td,byTime){
     const k=ymd(d);
     h+='<div class="dcol">';
     vis.forEach(a=>{
-      const ps=S.posts.filter(x=>x.date===k&&x.accountId===a.id).sort(byTime),ends=[];
-      const pl=ps.map(x=>{const m=mins(x.time||'09:00');let j=ends.findIndex(e=>e<=m);if(j<0){j=ends.length;ends.push(0)}ends[j]=m+55;return {x,m,j}});
-      const K=Math.max(1,ends.length);
+      const ps=S.posts.filter(x=>x.date===k&&x.accountId===a.id).sort(byTime);let prev=-99;
+      const pl=ps.map(x=>{let top=mins(x.time||'09:00')/60*HH;if(top<prev+24)top=prev+24;prev=top;return {x,top}});
       h+='<div class="lane">'+Array.from({length:24},(_,i)=>`<div class="slot" data-act="new" data-date="${k}" data-time="${String(i).padStart(2,'0')}:00" data-acc="${a.id}"></div>`).join('');
       pl.forEach(o=>{const x=o.x,t=x.time||'09:00',nm=prod(x.productId)?.name||'?';
-        h+=`<span class="ev ${x.status}" data-act="edit" data-id="${x.id}" title="${esc(t+' '+nm+' ('+a.name+')')}" style="--c:${a.color};top:${o.m/60*HH}px;left:${o.j/K*100}%;width:calc(${100/K}% - 8px)"><b>${esc(t)}</b> ${esc(nm)}</span>`});
+        h+=`<span class="ev ${x.status}" data-act="edit" data-id="${x.id}" title="${esc(t+' '+nm+' ('+a.name+')')}" style="--c:${a.color};top:${o.top}px;left:0;width:calc(100% - 8px)"><b>${esc(t)}</b> ${esc(nm)}</span>`});
       h+='</div>';
     });
     if(k==td)h+=`<div class="now" style="top:${(now.getHours()+now.getMinutes()/60)*HH}px"></div>`;
