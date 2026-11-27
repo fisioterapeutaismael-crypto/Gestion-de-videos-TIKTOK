@@ -46,7 +46,7 @@ nav button.on{background:var(--card);color:var(--ink);font-weight:700;box-shadow
 .cell.out{background:var(--paper);opacity:.55}
 .cell .n{font-size:12px;color:var(--mut)}
 .cell.today .n{background:var(--acc);color:#fff;border-radius:10px;padding:0 6px}
-.chip{display:block;margin-top:3px;padding:2px 6px;border-left:4px solid var(--c);background:var(--paper);border-radius:4px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{display:block;margin-top:3px;padding:2px 6px;border-left:4px solid var(--c);background:var(--paper);border-radius:4px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chip.done{opacity:.6;text-decoration:line-through}
 .more{display:block;margin-top:3px;padding:1px 6px;font-size:12px;font-weight:700;color:var(--acc);cursor:pointer}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
@@ -69,9 +69,9 @@ label>*{display:block;width:100%;margin-top:3px;color:var(--ink)}
 .seg button{border:0;border-radius:0;background:var(--card)}
 .seg button.on{background:var(--acc);color:#fff}
 .tgb{height:64vh;min-height:360px;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:8px}
-.tg{min-width:calc(52px + var(--n)*var(--na)*110px)}
-.tgh{position:sticky;top:0;z-index:3;display:grid;grid-template-columns:52px repeat(var(--n),minmax(calc(var(--na)*110px),1fr));background:var(--card);border-bottom:1px solid var(--line)}
-.tgc{display:grid;grid-template-columns:52px repeat(var(--n),minmax(calc(var(--na)*110px),1fr))}
+.tg{min-width:calc(52px + var(--n)*var(--na)*var(--lw,110px))}
+.tgh{position:sticky;top:0;z-index:3;display:grid;grid-template-columns:52px repeat(var(--n),minmax(calc(var(--na)*var(--lw,110px)),1fr));background:var(--card);border-bottom:1px solid var(--line)}
+.tgc{display:grid;grid-template-columns:52px repeat(var(--n),minmax(calc(var(--na)*var(--lw,110px)),1fr))}
 .tgd{padding:6px;text-align:center;border-left:1px solid var(--line);font-size:13px}
 .tgd.today b{background:var(--acc);color:#fff;border-radius:12px;padding:1px 7px}
 .hr,.slot{height:96px}
@@ -89,6 +89,8 @@ label>*{display:block;width:100%;margin-top:3px;color:var(--ink)}
 .slot:hover{background:var(--paper)}
 .ev{position:absolute;height:48px;padding:0 10px;border-left:5px solid var(--c);background:var(--paper);outline:1px solid var(--line);border-radius:6px;font-size:20px;line-height:48px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;cursor:pointer;z-index:2}
 .ev small{color:var(--mut)}
+.tg.wk{--lw:130px}
+.tg.wk .ev{font-size:14px;line-height:1.15;padding:7px 5px 0 6px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .ev.done{opacity:.6}
 .now{position:absolute;left:0;right:0;height:2px;background:var(--warn);z-index:2;pointer-events:none}
 .rec{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin-bottom:16px}
@@ -289,7 +291,7 @@ function vCal(){
     for(let i=0;i<tot;i++){
       const d=new Date(Y,M,i-off+1),k=ymd(d);
       const ps=S.posts.filter(x=>x.date==k&&!hidden.has(x.accountId)).sort(byTime);
-      cells+=`<div class="cell ${d.getMonth()!=M?'out':''} ${k==td?'today':''}" data-act="new" data-date="${k}"><span class="n">${d.getDate()}</span>${ps.slice(0,3).map(x=>`<span class="chip ${x.status}" data-act="edit" data-id="${x.id}" style="--c:${acc(x.accountId)?.color||'#888'}" title="${esc(prod(x.productId)?.name||'')}">${esc(x.time||'')} ${esc(prod(x.productId)?.name||'?')}</span>`).join('')}${ps.length>3?`<span class="more" data-act="goday" data-date="${k}">+${ps.length-3} más</span>`:''}</div>`;
+      cells+=`<div class="cell ${d.getMonth()!=M?'out':''} ${k==td?'today':''}" data-act="new" data-date="${k}"><span class="n">${d.getDate()}</span>${ps.slice(0,3).map(x=>`<span class="chip ${x.status}" data-act="edit" data-id="${x.id}" style="--c:${acc(x.accountId)?.color||'#888'}" title="${esc((x.time||'')+' '+(prod(x.productId)?.name||''))}">${esc(prod(x.productId)?.name||'?')}</span>`).join('')}${ps.length>3?`<span class="more" data-act="goday" data-date="${k}">+${ps.length-3} más</span>`:''}</div>`;
     }
     body=`<div class="grid">${['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].map(w=>`<div class="wd">${w}</div>`).join('')}${cells}</div>`;
     title=cap(cur.toLocaleDateString('es',{month:'long',year:'numeric'}));
@@ -311,7 +313,7 @@ function timeGrid(days,td,byTime){
   const HH=96,n=days.length,now=new Date(),vis=S.accounts.filter(a=>!hidden.has(a.id)),na=Math.max(1,vis.length);
   const mins=t=>{const q=t.split(':').map(Number);return q[0]*60+q[1]};
   const lh=vis.map(a=>`<span title="${esc(a.name)}"><i class="dot" style="--c:${a.color}"></i>${esc(a.name)}</span>`).join('');
-  let h=`<div class="tgb" id="tgb"><div class="tg" style="--n:${n};--na:${na}"><div class="tgh"><div></div>${days.map(d=>`<div class="tgd ${ymd(d)==td?'today':''}">${d.toLocaleDateString('es',{weekday:'short'})} <b>${d.getDate()}</b><div class="lh">${lh}</div></div>`).join('')}</div><div class="tgc"><div>${Array.from({length:24},(_,i)=>`<div class="hr">${String(i).padStart(2,'0')}:00</div>`).join('')}</div>`;
+  let h=`<div class="tgb" id="tgb"><div class="tg${n>1?' wk':''}" style="--n:${n};--na:${na}"><div class="tgh"><div></div>${days.map(d=>`<div class="tgd ${ymd(d)==td?'today':''}">${d.toLocaleDateString('es',{weekday:'short'})} <b>${d.getDate()}</b><div class="lh">${lh}</div></div>`).join('')}</div><div class="tgc"><div>${Array.from({length:24},(_,i)=>`<div class="hr">${String(i).padStart(2,'0')}:00</div>`).join('')}</div>`;
   days.forEach(d=>{
     const k=ymd(d);
     h+='<div class="dcol">';
@@ -320,7 +322,7 @@ function timeGrid(days,td,byTime){
       const pl=ps.map(x=>{let top=mins(x.time||'09:00')/60*HH;if(top<prev+HH/2)top=prev+HH/2;prev=top;return {x,top}});
       h+='<div class="lane">'+Array.from({length:24},(_,i)=>`<div class="slot" data-act="new" data-date="${k}" data-time="${String(i).padStart(2,'0')}:00" data-acc="${a.id}"></div>`).join('');
       pl.forEach(o=>{const x=o.x,t=x.time||'09:00',nm=prod(x.productId)?.name||'?';
-        h+=`<span class="ev ${x.status}" data-act="edit" data-id="${x.id}" title="${esc(t+' '+nm+' ('+a.name+')')}" style="--c:${a.color};top:${o.top}px;left:0;width:calc(100% - 8px)"><b>${esc(t)}</b> ${esc(nm)}</span>`});
+        h+=`<span class="ev ${x.status}" data-act="edit" data-id="${x.id}" title="${esc(t+' '+nm+' ('+a.name+')')}" style="--c:${a.color};top:${o.top}px;left:0;width:calc(100% - 8px)">${n==1?`<b>${esc(t)}</b> `:''}${esc(nm)}</span>`});
       h+='</div>';
     });
     if(k==td)h+=`<div class="now" style="top:${(now.getHours()+now.getMinutes()/60)*HH}px"></div>`;
