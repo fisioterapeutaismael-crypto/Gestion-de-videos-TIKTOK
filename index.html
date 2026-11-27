@@ -75,7 +75,7 @@ label>*{display:block;width:100%;margin-top:3px;color:var(--ink)}
 .tgd{padding:6px;text-align:center;border-left:1px solid var(--line);font-size:13px}
 .tgd.today b{background:var(--acc);color:#fff;border-radius:12px;padding:1px 7px}
 .hr,.slot{height:96px}
-.hr{font-size:12px;color:var(--mut);text-align:right;padding:0 6px}
+.hr{font-size:13px;color:var(--mut);text-align:right;padding:0 6px}
 .hr:not(:first-child){transform:translateY(-8px)}
 .dcol{position:relative;display:flex;border-left:1px solid var(--line)}
 .lane{flex:1;min-width:0;position:relative;border-left:1px dashed var(--line)}
@@ -87,7 +87,7 @@ label>*{display:block;width:100%;margin-top:3px;color:var(--ink)}
 .fr{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0 10px}
 .slot{border-bottom:1px solid var(--line);cursor:pointer}
 .slot:hover{background:var(--paper)}
-.ev{position:absolute;height:24px;padding:0 7px;border-left:4px solid var(--c);background:var(--paper);outline:1px solid var(--line);border-radius:4px;font-size:14px;line-height:24px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;cursor:pointer;z-index:2}
+.ev{position:absolute;height:48px;padding:0 10px;border-left:5px solid var(--c);background:var(--paper);outline:1px solid var(--line);border-radius:6px;font-size:20px;line-height:48px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;cursor:pointer;z-index:2}
 .ev small{color:var(--mut)}
 .ev.done{opacity:.6}
 .now{position:absolute;left:0;right:0;height:2px;background:var(--warn);z-index:2;pointer-events:none}
@@ -109,7 +109,7 @@ label>*{display:block;width:100%;margin-top:3px;color:var(--ink)}
 .dd li:hover,.dd li.act{background:var(--paper)}
 .dd li.dis{opacity:.55}
 .dd li.none{cursor:default;color:var(--mut)}
-@media (max-width:640px){.cell{height:104px}.chip{font-size:11px;padding:1px 3px}}
+@media (max-width:640px){.cell{height:104px}.chip{font-size:11px;padding:1px 3px}.ev{font-size:16px;line-height:1.2;padding:5px 7px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}}
   .donut-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center}
 .m-tip{position:fixed;z-index:9999;pointer-events:none;background:#141820;color:#f3f6fa;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:8px 12px;font-size:12.5px;line-height:1.35;box-shadow:0 10px 26px rgba(0,0,0,.42);transform:translate(-50%,-115%);opacity:0;transition:opacity .12s ease;white-space:nowrap}
 .m-tip.show{opacity:1}
@@ -317,7 +317,7 @@ function timeGrid(days,td,byTime){
     h+='<div class="dcol">';
     vis.forEach(a=>{
       const ps=S.posts.filter(x=>x.date===k&&x.accountId===a.id).sort(byTime);let prev=-99;
-      const pl=ps.map(x=>{let top=mins(x.time||'09:00')/60*HH;if(top<prev+HH/4)top=prev+HH/4;prev=top;return {x,top}});
+      const pl=ps.map(x=>{let top=mins(x.time||'09:00')/60*HH;if(top<prev+HH/2)top=prev+HH/2;prev=top;return {x,top}});
       h+='<div class="lane">'+Array.from({length:24},(_,i)=>`<div class="slot" data-act="new" data-date="${k}" data-time="${String(i).padStart(2,'0')}:00" data-acc="${a.id}"></div>`).join('');
       pl.forEach(o=>{const x=o.x,t=x.time||'09:00',nm=prod(x.productId)?.name||'?';
         h+=`<span class="ev ${x.status}" data-act="edit" data-id="${x.id}" title="${esc(t+' '+nm+' ('+a.name+')')}" style="--c:${a.color};top:${o.top}px;left:0;width:calc(100% - 8px)"><b>${esc(t)}</b> ${esc(nm)}</span>`});
